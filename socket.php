@@ -30,19 +30,26 @@ while (TRUE) {
     }
     unset($read[array_search($socket, $read)]);
   }
+  else {
+    foreach ($read as $connect) {//обрабатываем все соединения
+      $data = fread($connect, 100000000);
 
-  foreach ($read as $connect) {//обрабатываем все соединения
-    $data = fread($connect, 100000);
+      if (!$data) { //соединение было закрыто
+        fclose($connect);
+        unset($connects[array_search($connect, $connects)]);
+        onClose($connect);//вызываем пользовательский сценарий
+        continue;
+      }
 
-    if (!$data) { //соединение было закрыто
-      fclose($connect);
-      unset($connects[array_search($connect, $connects)]);
-      onClose($connect);//вызываем пользовательский сценарий
-      continue;
+      foreach ($connects as $connect2) {
+        if ($connect != $connect2) {
+          onMessage($connect2, $data);//вызываем пользовательский сценарий
+        }
+      }
     }
-
-    onMessage($connect, $data);//вызываем пользовательский сценарий
   }
+
+
 }
 
 fclose($socket);
@@ -52,7 +59,7 @@ fclose($socket);
 
 function onOpen($connect, $info) {
   echo "open\n";
-  fwrite($connect, encode('Привет'));
+//  fwrite($connect, encode('{"hello":"hello"}'));
 }
 
 function onClose($connect) {
@@ -60,6 +67,7 @@ function onClose($connect) {
 }
 
 function onMessage($connect, $data) {
-  echo decode($data)['payload'] . "\n";
-  fwrite($connect, encode(decode($data)['payload']));
+  $data_decode = decode($data);
+  echo $data_decode['payload'] . "\n";
+  fwrite($connect, encode($data_decode['payload']));
 }

@@ -12,6 +12,29 @@
 
 <script>
   var ws = new WebSocket('ws://websocket:8000');
+
+  function wsStart() {
+    ws.open = function () {
+      console.log('open');
+    };
+
+    ws.onclose = function () {
+      console.log('ws close!');
+      setTimeout(wsStart, 1000);
+    };
+
+    ws.onmessage = function (e) {
+      var response = JSON.parse(e.data);
+
+      clickX = response[0].concat(clickX);
+      clickY = response[1].concat(clickY);
+      clickDrag = response[2].concat(clickDrag);
+      redraw(clickX, clickY, clickDrag);
+    };
+  }
+
+  wsStart();
+
   var canvasDiv = document.getElementById('canvasDiv');
 
   canvas = document.createElement('canvas');
@@ -26,25 +49,26 @@
   context = canvas.getContext("2d");
 
   canvas.addEventListener('mousedown', function (e) {
-    console.log('mousedown');
     var mouseX = e.pageX - this.offsetLeft;
     var mouseY = e.pageY - this.offsetTop;
 
     paint = true;
     addClick(e.pageX - this.offsetLeft, e.pageY - this.offsetTop);
-    redraw();
+    redraw(clickX, clickY, clickDrag);
   });
 
   canvas.addEventListener('mousemove', function (e) {
     if (paint) {
       addClick(e.pageX - this.offsetLeft, e.pageY - this.offsetTop, true);
-      redraw();
+      redraw(clickX, clickY, clickDrag);
     }
     e.preventDefault();
   });
 
   canvas.addEventListener('mouseup', function (e) {
     paint = false;
+
+    ws.send(JSON.stringify([clickX, clickY, clickDrag]));
   });
 
   canvas.addEventListener('mouseleave', function (e) {
@@ -62,7 +86,7 @@
     clickDrag.push(dragging);
   }
 
-  function redraw() {
+  function redraw(clickX, clickY, clickDrag) {
     context.clearRect(0, 0, context.canvas.width, context.canvas.height); // Clears the canvas
 
     context.strokeStyle = "#df4b26";
@@ -79,26 +103,9 @@
       context.lineTo(clickX[i], clickY[i]);
       context.closePath();
       context.stroke();
-
-      var coords = [clickX, clickY, clickDrag];
-      ws.send(JSON.stringify(coords));
     }
   }
 
-  function wsStart() {
-    ws.open = function () {
-      console.log('open');
-    };
-
-    ws.onclose = function () {
-      console.log('ws close!');
-      setTimeout(wsStart, 1000);
-    };
-
-    ws.onmessage = function () {
-      console.log('message');
-    };
-  }
 
 </script>
 </body>
