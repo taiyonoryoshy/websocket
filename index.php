@@ -11,7 +11,9 @@
 <div id="canvasDiv"></div>
 
 <script>
+  var ws = new WebSocket('ws://websocket:8000');
   var canvasDiv = document.getElementById('canvasDiv');
+
   canvas = document.createElement('canvas');
   canvas.setAttribute('width', 1600);
   canvas.setAttribute('height', 800);
@@ -77,7 +79,25 @@
       context.lineTo(clickX[i], clickY[i]);
       context.closePath();
       context.stroke();
+
+      var coords = [clickX, clickY, clickDrag];
+      ws.send(JSON.stringify(coords));
     }
+  }
+
+  function wsStart() {
+    ws.open = function () {
+      console.log('open');
+    };
+
+    ws.onclose = function () {
+      console.log('ws close!');
+      setTimeout(wsStart, 1000);
+    };
+
+    ws.onmessage = function () {
+      console.log('message');
+    };
   }
 
 </script>
