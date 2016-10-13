@@ -15,7 +15,7 @@
 
   function wsStart() {
     ws.open = function () {
-      console.log('open');
+      console.log('ws open');
     };
 
     ws.onclose = function () {
@@ -24,6 +24,9 @@
     };
 
     ws.onmessage = function (e) {
+      if (!e.data) {
+        return;
+      }
       var response = JSON.parse(e.data);
 
       clickX = response[0].concat(clickX);
@@ -68,7 +71,10 @@
   canvas.addEventListener('mouseup', function (e) {
     paint = false;
 
-    ws.send(JSON.stringify([clickX, clickY, clickDrag]));
+    ws.send(JSON.stringify([clickX2, clickY2, clickDrag2]));
+    clickX2 = [];
+    clickY2 = [];
+    clickDrag2 = [];
   });
 
   canvas.addEventListener('mouseleave', function (e) {
@@ -78,12 +84,19 @@
   var clickX = [];
   var clickY = [];
   var clickDrag = [];
+  var clickX2 = [];
+  var clickY2 = [];
+  var clickDrag2 = [];
   var paint;
 
   function addClick(x, y, dragging) {
     clickX.push(x);
     clickY.push(y);
     clickDrag.push(dragging);
+
+    clickX2.push(x);
+    clickY2.push(y);
+    clickDrag2.push(dragging);
   }
 
   function redraw(clickX, clickY, clickDrag) {
